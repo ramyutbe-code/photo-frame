@@ -1,164 +1,111 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#080808">
-  <title>Photo Frame</title>
-  <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; width: 100%; height: 100%; background: #080808; color: #fff; font-family: system-ui, sans-serif; overflow: hidden; }
-    #stage { position: fixed; inset: 0; display: grid; place-items: center; }
-    #photo { width: 100%; height: 100%; object-fit: contain; opacity: 1; transition: opacity 700ms ease; }
-    #photo.fade { opacity: 0; }
-    #shade { position: fixed; inset: auto 0 0; padding: 3rem 1.25rem 1.25rem; background: linear-gradient(transparent, rgba(0,0,0,.75)); display: flex; align-items: end; justify-content: space-between; gap: 1rem; opacity: 1; transition: opacity .35s; }
-    #shade.hidden { opacity: 0; pointer-events: none; }
-    #caption { font-size: clamp(.8rem, 2vw, 1rem); color: #ddd; }
-    #controls { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: end; }
-    button, select { border: 1px solid #777; background: rgba(25,25,25,.9); color: white; border-radius: .55rem; padding: .65rem .8rem; font: inherit; cursor: pointer; }
-    #hint { position: fixed; top: 1rem; left: 1rem; padding: .5rem .75rem; border-radius: .5rem; background: rgba(0,0,0,.55); color: #ddd; font-size: .85rem; opacity: 1; transition: opacity .35s; }
-    #hint.hidden { opacity: 0; }
-    #error { max-width: 44rem; padding: 2rem; line-height: 1.5; text-align: center; }
-    #error code { color: #9ee7ff; }
-    @media (max-width: 600px) { #shade { flex-direction: column; align-items: stretch; } #controls { justify-content: center; } }
-    @media (prefers-reduced-motion: reduce) { #photo, #shade, #hint { transition: none; } }
-  </style>
-</head>
-<body>
-  <main id="stage"><img id="photo" alt="Slideshow photo" /></main>
-  <div id="hint">Tap / move mouse to show controls · F fullscreen · Space pause</div>
-  <footer id="shade">
-    <div id="caption">Loading photos…</div>
-    <div id="controls">
-      <button id="prev" aria-label="Previous photo">← Previous</button>
-      <button id="toggle">Pause</button>
-      <button id="next" aria-label="Next photo">Next →</button>
-      <button id="shuffle">Shuffle: Off</button>
-      <label style="display:flex;align-items:center;gap:.4rem">Every
-        <select id="interval" aria-label="Slide duration">
-          <option value="5">5 sec</option><option value="10" selected>10 sec</option>
-          <option value="15">15 sec</option><option value="30">30 sec</option>
-        </select>
-      </label>
-      <button id="full">Fullscreen</button>
-    </div>
-  </footer>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080808"><title>Photo Frame • World Clock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--accent:#f4c27a;--panel:rgba(8,12,18,.52);--panel-opacity:.76;--text:#fff;--muted:rgba(255,255,255,.76);--clock-font:'Space Grotesk',sans-serif;--widget-scale:1}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080808;color:var(--text);font-family:'DM Sans',system-ui,sans-serif}button,input,select{font:inherit}button,select,input[type=text],input[type=number]{border:1px solid #ffffff35;background:#151922e8;color:#fff;border-radius:10px;padding:.65rem .8rem}button{cursor:pointer}button:hover{border-color:var(--accent)}
+#stage{position:fixed;inset:0;display:grid;place-items:center;background:#080808}#photo{width:100%;height:100%;object-fit:contain;opacity:1;transition:opacity .7s}#photo.fade{opacity:0}
+#overlay{position:fixed;inset:0;pointer-events:none;display:flex;padding:clamp(16px,3vw,42px);z-index:2}#overlay[data-position="top-left"]{align-items:flex-start;justify-content:flex-start}#overlay[data-position="top-center"]{align-items:flex-start;justify-content:center}#overlay[data-position="top-right"]{align-items:flex-start;justify-content:flex-end}#overlay[data-position="bottom-left"]{align-items:flex-end;justify-content:flex-start}#overlay[data-position="bottom-center"]{align-items:flex-end;justify-content:center}#overlay[data-position="bottom-right"]{align-items:flex-end;justify-content:flex-end}
+#dashboard{pointer-events:auto;display:flex;align-items:flex-start;gap:clamp(14px,2vw,28px);padding:clamp(14px,2vw,26px);border-radius:20px;background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #ffffff20;max-width:min(94vw,850px);box-shadow:0 10px 50px #0002;transition:opacity .25s;opacity:var(--panel-opacity)}#dashboard.hidden{display:none}.widget{min-width:0}.widget.hidden{display:none!important}.eyebrow{font-size:clamp(10px,.9vw,13px);text-transform:uppercase;letter-spacing:.17em;color:var(--muted);margin-bottom:5px}.clock-time{font-family:var(--clock-font);font-size:clamp(34px,6.2vw,82px);font-weight:500;letter-spacing:-.055em;line-height:1.04;white-space:nowrap;color:var(--clock-color,var(--accent));font-variant-numeric:tabular-nums}.clock-date{font-size:clamp(12px,1.35vw,17px);color:var(--muted);margin-top:8px}.secondary-time{font-family:var(--clock-font);font-size:clamp(22px,3vw,42px);line-height:1.1;color:var(--second-color,#a9d9ff);white-space:nowrap;font-variant-numeric:tabular-nums}.weather-row{display:flex;align-items:center;gap:12px}.weather-icon{font-size:clamp(34px,4vw,56px);line-height:1}.weather-temp{font-family:var(--clock-font);font-size:clamp(28px,4vw,54px);letter-spacing:-.04em;line-height:1;color:var(--weather-color,#fff)}.weather-condition{color:var(--muted);font-size:clamp(12px,1.25vw,16px);margin-top:5px}.weather-details{color:var(--muted);font-size:clamp(10px,1vw,13px);margin-top:10px;line-height:1.65}.divider{width:1px;align-self:stretch;background:#ffffff28;min-height:54px}
+#topbar{position:fixed;top:14px;right:14px;z-index:5;display:flex;gap:8px;opacity:0;transition:opacity .25s}body.controls-visible #topbar{opacity:1}#topbar button{background:#10141bd9;border:1px solid #ffffff42;border-radius:999px;padding:.6rem .85rem}#hint{position:fixed;left:14px;top:14px;z-index:5;color:#fff9;background:#10141b99;padding:.5rem .7rem;border-radius:9px;font-size:12px;opacity:0;transition:opacity .25s}body.controls-visible #hint{opacity:1}
+#slideshow-bar{position:fixed;left:0;right:0;bottom:0;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:3.2rem 1.2rem 1rem;background:linear-gradient(transparent,rgba(0,0,0,.72));transition:opacity .25s}#slideshow-bar.hidden{opacity:0;pointer-events:none}#caption{font-size:.85rem;color:#eee;white-space:nowrap}#controls{display:flex;align-items:center;flex-wrap:wrap;gap:.45rem;justify-content:flex-end}#controls button,#controls select{padding:.55rem .7rem;font-size:.85rem;border-radius:9px;background:#10141bd9}#controls label{font-size:.8rem;color:#eee;display:flex;align-items:center;gap:5px}
+#settings-backdrop{position:fixed;inset:0;z-index:10;background:#0009;display:none;justify-content:flex-end}#settings-backdrop.open{display:flex}#settings{width:min(460px,100vw);height:100%;overflow:auto;background:#10141b;color:#fff;padding:20px 20px 30px;box-shadow:-10px 0 40px #0005;border-left:1px solid #ffffff20}#settings-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}#settings h2{font-size:22px;margin:0;font-weight:600}#settings .intro{color:#aeb8c7;font-size:13px;line-height:1.5;margin:0 0 18px}fieldset{border:1px solid #ffffff22;border-radius:14px;padding:14px;margin:0 0 13px;min-width:0}legend{padding:0 7px;color:var(--accent);font-size:13px;font-weight:600;letter-spacing:.04em}.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#cbd3df;min-width:0}.field input[type=text],.field input[type=number],.field select{width:100%;min-width:0;padding:.6rem;font-size:13px}.field input[type=color]{width:100%;height:38px;padding:3px;border:1px solid #ffffff35;border-radius:8px;background:#151922}.check{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px;color:#e6eaf0}.check input{accent-color:var(--accent);width:16px;height:16px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.primary{background:var(--accent);color:#161616;border-color:transparent;font-weight:700}.subtle{color:#e6eaf0}.status{font-size:12px;color:#aeb8c7;line-height:1.5;margin-top:8px}.weather-warning{color:#ffd28b}.hidden{display:none!important}
+@media(max-width:650px){#overlay{padding:12px}#dashboard{max-width:calc(100vw - 24px);gap:12px;padding:12px;border-radius:15px;flex-wrap:wrap}#dashboard .divider{display:none}#clock-widget{width:100%}.clock-time{font-size:clamp(34px,10vw,60px)}#slideshow-bar{align-items:flex-end;flex-direction:column;padding-bottom:10px}#controls{justify-content:center}#caption{align-self:flex-start}#settings{padding:16px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<main id="stage"><img id="photo" alt="Slideshow photo"></main>
+<div id="overlay" data-position="bottom-left"><section id="dashboard">
+ <div id="clock-widget" class="widget"><div class="eyebrow" id="main-clock-label">Local time</div><div class="clock-time" id="main-time">--:--</div><div class="clock-date" id="main-date">Loading date…</div></div>
+ <div class="divider" id="divider-one"></div>
+ <div id="second-widget" class="widget"><div class="eyebrow" id="second-label">New York</div><div class="secondary-time" id="second-time">--:--</div><div class="clock-date" id="second-date"></div></div>
+ <div class="divider" id="divider-two"></div>
+ <div id="weather-widget" class="widget"><div class="eyebrow" id="weather-location-label">Weather · London</div><div class="weather-row"><div id="weather-icon" class="weather-icon">🌤️</div><div><div id="weather-temp" class="weather-temp">--°</div><div id="weather-condition" class="weather-condition">Getting weather…</div></div></div><div id="weather-details" class="weather-details"></div></div>
+</section></div>
+<div id="hint">Move / tap to show controls · F fullscreen · Space pause</div>
+<div id="topbar"><button id="settings-open" title="Settings">⚙ Settings</button><button id="hide-widgets" title="Hide information panel">Hide panel</button></div>
+<footer id="slideshow-bar"><div id="caption">Loading photos…</div><div id="controls"><button id="prev">← Previous</button><button id="toggle">Pause</button><button id="next">Next →</button><button id="shuffle">Shuffle: Off</button><label>Every <select id="interval"><option value="5">5 sec</option><option value="10" selected>10 sec</option><option value="15">15 sec</option><option value="30">30 sec</option><option value="60">60 sec</option></select></label><button id="full">Fullscreen</button></div></footer>
+<div id="settings-backdrop" aria-hidden="true"><aside id="settings" role="dialog" aria-modal="true" aria-label="Photo frame settings"><div id="settings-head"><h2>Display settings</h2><button id="settings-close">✕</button></div><p class="intro">Switch each widget on or off and style your photo frame. Settings are saved in this browser on this device.</p>
+<fieldset><legend>Visibility</legend><label class="check"><input id="show-main" type="checkbox"> Main clock</label><label class="check"><input id="show-seconds" type="checkbox"> Show seconds</label><label class="check"><input id="show-date" type="checkbox"> Date</label><label class="check"><input id="show-second" type="checkbox"> Second time zone</label><label class="check"><input id="show-weather" type="checkbox"> Weather</label><label class="check"><input id="show-weather-icon" type="checkbox"> Weather icon</label><label class="check"><input id="show-weather-details" type="checkbox"> Humidity and wind</label><label class="check"><input id="show-slideshow-controls" type="checkbox"> Slideshow controls</label></fieldset>
+<fieldset><legend>Main clock</legend><div class="grid"><label class="field">Clock label<input id="main-label-setting" type="text" maxlength="24"></label><label class="field">Time format<select id="time-format"><option value="24">24-hour</option><option value="12">12-hour</option></select></label><label class="field">Font<select id="main-font"><option value="Space Grotesk">Space Grotesk</option><option value="DM Sans">DM Sans</option><option value="DM Mono">DM Mono</option><option value="Playfair Display">Playfair Display</option><option value="system-ui">System</option></select></label><label class="field">Text colour<input id="main-color" type="color"></label></div></fieldset>
+<fieldset><legend>Second time zone</legend><div class="grid"><label class="field">Label<input id="second-label-setting" type="text" maxlength="30"></label><label class="field">Time zone<select id="timezone"><option value="America/New_York">New York</option><option value="Asia/Kolkata">India</option><option value="Asia/Dubai">Dubai</option><option value="Asia/Tokyo">Tokyo</option><option value="Europe/London">London</option><option value="Europe/Paris">Paris</option><option value="Australia/Sydney">Sydney</option><option value="America/Los_Angeles">Los Angeles</option><option value="America/Chicago">Chicago</option><option value="UTC">UTC</option></select></label><label class="field">Font<select id="second-font"><option value="Space Grotesk">Space Grotesk</option><option value="DM Sans">DM Sans</option><option value="DM Mono">DM Mono</option><option value="Playfair Display">Playfair Display</option><option value="system-ui">System</option></select></label><label class="field">Text colour<input id="second-color" type="color"></label></div></fieldset>
+<fieldset><legend>Weather</legend><div class="grid"><label class="field">City / town<input id="weather-city" type="text" maxlength="80" placeholder="e.g. Manchester"></label><label class="field">Temperature units<select id="units"><option value="celsius">Celsius °C</option><option value="fahrenheit">Fahrenheit °F</option></select></label><label class="field">Text colour<input id="weather-color" type="color"></label><label class="field">Refresh interval<select id="weather-refresh"><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></label></div><div class="actions"><button id="use-location">Use device location</button><button id="refresh-weather">Refresh weather</button></div><div id="weather-status" class="status">Weather uses the free Open-Meteo service; no API key is needed. Your city is sent to its geocoding service to find coordinates.</div></fieldset>
+<fieldset><legend>Panel style</legend><div class="grid"><label class="field">Panel position<select id="panel-position"><option value="bottom-left">Bottom left</option><option value="bottom-center">Bottom centre</option><option value="bottom-right">Bottom right</option><option value="top-left">Top left</option><option value="top-center">Top centre</option><option value="top-right">Top right</option></select></label><label class="field">Panel opacity<select id="panel-opacity"><option value="0.35">Very subtle</option><option value="0.55">Light</option><option value="0.76">Balanced</option><option value="0.9">Strong</option><option value="1">Solid</option></select></label></div></fieldset>
+<div class="actions"><button class="primary" id="save-settings">Save settings</button><button class="subtle" id="reset-settings">Reset defaults</button></div><div class="status">Tip: the settings panel is hidden during normal viewing. Press ⚙ Settings or use the on-screen button to reopen it.</div>
+</aside></div>
 <script>
-/*
-  Add direct image URLs below. Use the direct image URL from ImgBB, typically
-  starting with https://i.ibb.co/ . Do not use the ImgBB page/share URL.
-  This is a public website: anyone who can access it may see these URLs/photos.
-*/
 const PHOTOS = [
-  // "https://i.ibb.co/your-image-id/your-photo.jpg",
+  "https://i.ibb.co/dsTmNh5G/valley-view-in-Snowdonia-National-Park-Wales-from-inside-of-car.webp",
+  "https://i.ibb.co/ZzK9ZnYZ/snowdonia-narrow-country-lane-drive.webp",
+  "https://i.ibb.co/qLNb4kXf/snowdonia-valley-aerial-road-view.webp",
+  "https://i.ibb.co/6cGgydjf/snowdonia-mountain-road-with-stream.webp",
+  "https://i.ibb.co/8gqPTTN8/snowdonia-mountain-road-and-stream.webp",
+  "https://i.ibb.co/7xm4qjvs/snowdonia-lake-reflection-evening-view.webp",
+  "https://i.ibb.co/WNT7Rnz1/Snowdonia-with-lake-on-foothills.webp",
+  "https://i.ibb.co/8nVJh8FR/snowdonia-lake-mountain-landscape.webp",
+  "https://i.ibb.co/M5nvsn4L/Snowdonia-Peak.webp",
+  "https://i.ibb.co/jNH5LJb/snowdon-horseshoe-view-pen-y-pass-road.webp",
+  "https://i.ibb.co/Gv6H42g6/Snowdon-peak-rising-above-valley.webp",
+  "https://i.ibb.co/V0T0ww9Y/Snowdon-peak-rising-above-valley-in-Snowdonia.webp",
+  "https://i.ibb.co/fVrjcRMM/Snowdon-peak-rising-above-valley-in-Snowdonia-with-parked-BMW-in-front.webp",
+  "https://i.ibb.co/TDM1tBZz/Snowdon-mountain-view-from-Pen-y-Pass-trail.webp",
+  "https://i.ibb.co/KcLsw4zs/Snowdon-mountain-view-from-Pen-y-Pass-trail-in-Wales.webp",
+  "https://i.ibb.co/kgpP4jkX/Snow-top-mountain-view-in-Snowdonia-National-Park-Wales-from-inside-of-car.webp",
+  "https://i.ibb.co/VcxK5STy/pen-y-pass-lake-hiking-trail-snowdonia.webp",
+  "https://i.ibb.co/yn4nP6cq/Mountain-view-in-Snowdonia-National-Park-Wales.webp",
+  "https://i.ibb.co/VY47HRr2/Mountain-valley-view-in-Snowdonia-National-Park-Wales.webp",
+  "https://i.ibb.co/Kxc0npnx/Mountain-peak-view-in-Snowdonia-National-Park-Wales.webp",
+  "https://i.ibb.co/67sByzV3/llyn-pen-y-pass-sunset-snowdon-view.webp",
+  "https://i.ibb.co/Rpnp6VrJ/llanberis-pass-winding-road-aerial.webp",
+  "https://i.ibb.co/bj38Qz0j/llanberis-pass-valley-drone-view.webp",
+  "https://i.ibb.co/wrLbkrjG/llanberis-pass-scenic-mountain-road.webp",
+  "https://i.ibb.co/8DRPpmyM/llanberis-pass-roadside-bmw-snowdonia.webp",
+  "https://i.ibb.co/gMRNfwcy/llanberis-pass-curved-road-view.webp",
+  "https://i.ibb.co/Y4rLs3Xw/Hiking-trail-leading-toward-Snowdon-from-Pen-y-Pass.webp",
+  "https://i.ibb.co/8nQQcVWX/Frozen-water-patterns-on-hiking-trail-in-Snowdonia.webp",
+  "https://i.ibb.co/Gv03GTtW/dinorwig-slate-quarry-llyn-peris-view.webp",
+  "https://i.ibb.co/fzxpMhvS/bmw-driving-towards-snowdon-horseshoe.webp",
+  "https://i.ibb.co/hTnVSLP/Another-view-of-mountain-peaks-in-Snowdonia-National-Park-Wales.webp",
+  "https://i.ibb.co/qYJ8SnTM/a55-north-wales-coastal-road-drive.webp",
+  "https://i.ibb.co/r1hML4N/vlcsnap-2026-02-10-11h18m31s751.jpg",
+  "https://i.ibb.co/xq6bdn17/vlcsnap-2026-02-10-11h17m59s303.jpg",
+  "https://i.ibb.co/LhXt2Xqb/vlcsnap-2026-02-10-11h17m06s844.jpg",
+  "https://i.ibb.co/jkhP4dWL/vlcsnap-2026-02-10-11h16m40s629.jpg",
+  "https://i.ibb.co/4R38ZTtM/vlcsnap-2026-02-10-11h16m24s834.jpg",
+  "https://i.ibb.co/GvBkxnNf/vlcsnap-2026-02-10-11h16m04s071.jpg",
+  "https://i.ibb.co/39vJXX54/vlcsnap-2026-02-10-11h15m00s008.jpg",
+  "https://i.ibb.co/4g3tTm7R/vlcsnap-2026-02-10-11h14m33s543.jpg",
+  "https://i.ibb.co/vC33qwHf/vlcsnap-2026-02-10-11h14m03s997.jpg",
+  "https://i.ibb.co/n8sPVLff/IMG-3606.jpg",
+  "https://i.ibb.co/8gx8fdP8/IMG-3599.jpg",
+  "https://i.ibb.co/39SqWccn/IMG-3583.jpg",
+  "https://i.ibb.co/ymdVh7Dy/IMG-3582.jpg",
+  "https://i.ibb.co/gZ1ZNgqr/IMG-3562-1.jpg",
+  "https://i.ibb.co/LDQMwZVr/IMG-3559.jpg",
+  "https://i.ibb.co/ZpHnQQjw/IMG-3557.jpg",
+  "https://i.ibb.co/R4PMXZJm/IMG-3556.jpg",
 ];
-
-const img = document.getElementById('photo');
-const caption = document.getElementById('caption');
-const shade = document.getElementById('shade');
-const hint = document.getElementById('hint');
-const toggleBtn = document.getElementById('toggle');
-const shuffleBtn = document.getElementById('shuffle');
-const intervalSelect = document.getElementById('interval');
-
-let order = PHOTOS.map((_, i) => i);
-let position = 0;
-let playing = true;
-let shuffled = false;
-let timer = null;
-let hideTimer = null;
-let touchStartX = null;
-
-function shuffleOrder() {
-  order = PHOTOS.map((_, i) => i);
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
-  }
-  position = 0;
-}
-function showControls() {
-  shade.classList.remove('hidden');
-  hint.classList.remove('hidden');
-  clearTimeout(hideTimer);
-  hideTimer = setTimeout(() => {
-    shade.classList.add('hidden');
-    hint.classList.add('hidden');
-  }, 3500);
-}
-function showPhoto(nextPosition) {
-  if (!PHOTOS.length) {
-    caption.innerHTML = 'No photos added yet. Edit <code>index.html</code> and add direct ImgBB image URLs to the <code>PHOTOS</code> list.';
-    img.style.display = 'none';
-    return;
-  }
-  position = (nextPosition + order.length) % order.length;
-  const url = PHOTOS[order[position]];
-  img.classList.add('fade');
-  const preload = new Image();
-  preload.onload = () => {
-    setTimeout(() => {
-      img.src = url;
-      img.alt = `Photo ${position + 1} of ${order.length}`;
-      img.classList.remove('fade');
-      caption.textContent = `${position + 1} / ${order.length}`;
-    }, 180);
-  };
-  preload.onerror = () => {
-    caption.textContent = `Could not load photo ${position + 1}. Check that the URL is a direct image link.`;
-    img.classList.remove('fade');
-  };
-  preload.src = url;
-}
-function stopTimer() { clearInterval(timer); timer = null; }
-function startTimer() {
-  stopTimer();
-  if (playing && PHOTOS.length > 1) timer = setInterval(() => showPhoto(position + 1), Number(intervalSelect.value) * 1000);
-}
-function setPlaying(value) {
-  playing = value;
-  toggleBtn.textContent = playing ? 'Pause' : 'Play';
-  startTimer();
-}
-document.getElementById('prev').addEventListener('click', () => { showPhoto(position - 1); showControls(); });
-document.getElementById('next').addEventListener('click', () => { showPhoto(position + 1); showControls(); });
-toggleBtn.addEventListener('click', () => { setPlaying(!playing); showControls(); });
-shuffleBtn.addEventListener('click', () => {
-  shuffled = !shuffled;
-  shuffleBtn.textContent = `Shuffle: ${shuffled ? 'On' : 'Off'}`;
-  if (shuffled) shuffleOrder(); else { order = PHOTOS.map((_, i) => i); position = 0; }
-  showPhoto(position); startTimer(); showControls();
-});
-intervalSelect.addEventListener('change', () => { startTimer(); showControls(); });
-document.getElementById('full').addEventListener('click', async () => {
-  try {
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  } catch (e) { caption.textContent = 'Use your browser menu to enter fullscreen on this device.'; }
-  showControls();
-});
-document.addEventListener('mousemove', showControls);
-document.addEventListener('pointerdown', showControls);
-document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight') showPhoto(position + 1);
-  else if (e.key === 'ArrowLeft') showPhoto(position - 1);
-  else if (e.code === 'Space') { e.preventDefault(); setPlaying(!playing); }
-  else if (e.key.toLowerCase() === 'f') document.getElementById('full').click();
-  showControls();
-});
-document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
-document.addEventListener('touchend', e => {
-  if (touchStartX === null) return;
-  const delta = e.changedTouches[0].screenX - touchStartX;
-  if (Math.abs(delta) > 55) showPhoto(position + (delta < 0 ? 1 : -1));
-  touchStartX = null;
-}, {passive:true});
-
-if (shuffled) shuffleOrder();
-showPhoto(0);
-startTimer();
-showControls();
-</script>
-</body>
-</html>
+const $=id=>document.getElementById(id);
+const defaults={showMain:true,showSeconds:false,showDate:true,showSecond:true,showWeather:true,showWeatherIcon:true,showWeatherDetails:true,showSlideshowControls:true,timeFormat:'24',mainLabel:'Local time',mainFont:'Space Grotesk',mainColor:'#f4c27a',secondLabel:'New York',timezone:'America/New_York',secondFont:'DM Sans',secondColor:'#a9d9ff',weatherCity:'London',units:'celsius',weatherColor:'#ffffff',weatherRefresh:'15',panelPosition:'bottom-left',panelOpacity:'0.76'};
+let cfg={...defaults};try{cfg={...cfg,...JSON.parse(localStorage.getItem('photoFrameSettings')||'{}')}}catch(e){}
+const img=$('photo'),caption=$('caption'),shade=$('slideshow-bar'),hint=$('hint');let order=PHOTOS.map((_,i)=>i),position=0,playing=true,shuffled=false,timer=null,hideTimer=null,touchStartX=null,weatherTimer=null;
+function shuffleOrder(){order=PHOTOS.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}position=0}
+function showControls(){document.body.classList.add('controls-visible');clearTimeout(hideTimer);hideTimer=setTimeout(()=>{document.body.classList.remove('controls-visible');shade.classList.add('hidden')},4200);shade.classList.remove('hidden')}
+function showPhoto(n){if(!PHOTOS.length){caption.textContent='No photos configured.';img.style.display='none';return}position=(n+order.length)%order.length;const url=PHOTOS[order[position]],preload=new Image();img.classList.add('fade');preload.onload=()=>setTimeout(()=>{img.src=url;img.alt=`Photo ${position+1} of ${order.length}`;img.classList.remove('fade');caption.textContent=`${position+1} / ${order.length}`},150);preload.onerror=()=>{caption.textContent=`Could not load photo ${position+1}`;img.classList.remove('fade')};preload.src=url}
+function stopTimer(){clearInterval(timer);timer=null}function startTimer(){stopTimer();if(playing&&PHOTOS.length>1)timer=setInterval(()=>showPhoto(position+1),Number($('interval').value)*1000)}function setPlaying(v){playing=v;$('toggle').textContent=playing?'Pause':'Play';startTimer()}
+function fmtDate(date,tz){return new Intl.DateTimeFormat(undefined,{weekday:'long',day:'numeric',month:'long',timeZone:tz}).format(date)}
+function updateClock(){const now=new Date(),fmt=cfg.timeFormat==='12'?{hour:'numeric',minute:'2-digit',hour12:true}:{hour:'2-digit',minute:'2-digit',hour12:false};if(cfg.showSeconds)fmt.second='2-digit';$('main-time').textContent=new Intl.DateTimeFormat(undefined,{...fmt}).format(now);$('main-date').textContent=fmtDate(now,Intl.DateTimeFormat().resolvedOptions().timeZone);$('second-time').textContent=new Intl.DateTimeFormat(undefined,{...fmt,timeZone:cfg.timezone}).format(now);$('second-date').textContent=fmtDate(now,cfg.timezone)}
+function weatherDescription(code){if(code===0)return ['Clear sky','☀️'];if([1,2].includes(code))return ['Mostly clear','🌤️'];if(code===3)return ['Overcast','☁️'];if([45,48].includes(code))return ['Foggy','🌫️'];if([51,53,55,56,57].includes(code))return ['Drizzle','🌦️'];if([61,63,65,66,67,80,81,82].includes(code))return ['Rain','🌧️'];if([71,73,75,77,85,86].includes(code))return ['Snow','❄️'];if([95,96,99].includes(code))return ['Thunderstorm','⛈️'];return ['Current conditions','🌡️']}
+async function fetchWeather(coords=null){const status=$('weather-status');try{status.textContent='Loading current weather…';let lat,lon,place=cfg.weatherCity.trim();if(coords){lat=coords.latitude;lon=coords.longitude;place='Your location';cfg.weatherCoords={latitude:lat,longitude:lon}}else if(cfg.weatherCoords){lat=cfg.weatherCoords.latitude;lon=cfg.weatherCoords.longitude;place='Your location'}else{if(!place)throw Error('Enter a city or use device location.');const geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(place)}&count=1&language=en&format=json`);if(!geo.ok)throw Error('Could not find that city.');const gd=await geo.json();if(!gd.results?.length)throw Error('City not found. Check the spelling.');lat=gd.results[0].latitude;lon=gd.results[0].longitude;place=[gd.results[0].name,gd.results[0].admin1].filter(Boolean).join(', ');cfg.weatherCity=gd.results[0].name}
+const unit=cfg.units==='fahrenheit'?'fahrenheit':'celsius';const resp=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&temperature_unit=${unit}&wind_speed_unit=kmh`);if(!resp.ok)throw Error('Weather service is temporarily unavailable.');const data=await resp.json(),c=data.current,[desc,icon]=weatherDescription(c.weather_code),unitMark=unit==='celsius'?'°C':'°F';$('weather-location-label').textContent=`Weather · ${place}`;$('weather-temp').textContent=`${Math.round(c.temperature_2m)}${unitMark}`;$('weather-condition').textContent=desc;$('weather-icon').textContent=icon;$('weather-details').textContent=`Feels ${Math.round(c.apparent_temperature)}${unitMark}  ·  Humidity ${c.relative_humidity_2m}%  ·  Wind ${Math.round(c.wind_speed_10m)} km/h`;status.textContent=`Updated ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}. Weather by Open-Meteo.`;localStorage.setItem('photoFrameSettings',JSON.stringify(cfg));}catch(e){$('weather-condition').textContent='Weather unavailable';status.textContent=e.message||'Could not load weather.';}}
+function applySettings(){ $('clock-widget').classList.toggle('hidden',!cfg.showMain);$('divider-one').classList.toggle('hidden',!cfg.showMain||!cfg.showSecond);$('second-widget').classList.toggle('hidden',!cfg.showSecond);$('divider-two').classList.toggle('hidden',!cfg.showWeather||(!cfg.showSecond&&!cfg.showMain));$('weather-widget').classList.toggle('hidden',!cfg.showWeather);$('main-date').classList.toggle('hidden',!cfg.showDate);$('second-date').classList.toggle('hidden',!cfg.showDate);$('weather-icon').classList.toggle('hidden',!cfg.showWeatherIcon);$('weather-details').classList.toggle('hidden',!cfg.showWeatherDetails);$('slideshow-bar').classList.toggle('hidden',!cfg.showSlideshowControls);$('main-clock-label').textContent=cfg.mainLabel||'Local time';$('second-label').textContent=cfg.secondLabel||cfg.timezone;$('main-time').style.setProperty('--clock-color',cfg.mainColor);$('main-time').style.fontFamily=`"${cfg.mainFont}",sans-serif`;$('second-time').style.setProperty('--second-color',cfg.secondColor);$('second-time').style.fontFamily=`"${cfg.secondFont}",sans-serif`;$('weather-temp').style.setProperty('--weather-color',cfg.weatherColor);$('overlay').dataset.position=cfg.panelPosition;$('dashboard').style.setProperty('--panel-opacity',cfg.panelOpacity);document.documentElement.style.setProperty('--panel-opacity',cfg.panelOpacity);$('panel-opacity').value=cfg.panelOpacity;$('panel-position').value=cfg.panelPosition;updateClock();}
+const fields={'show-main':'showMain','show-seconds':'showSeconds','show-date':'showDate','show-second':'showSecond','show-weather':'showWeather','show-weather-icon':'showWeatherIcon','show-weather-details':'showWeatherDetails','show-slideshow-controls':'showSlideshowControls','main-label-setting':'mainLabel','time-format':'timeFormat','main-font':'mainFont','main-color':'mainColor','second-label-setting':'secondLabel','timezone':'timezone','second-font':'secondFont','second-color':'secondColor','weather-city':'weatherCity','units':'units','weather-color':'weatherColor','weather-refresh':'weatherRefresh','panel-position':'panelPosition','panel-opacity':'panelOpacity'};
+function loadForm(){for(const [id,key] of Object.entries(fields)){const el=$(id);if(el.type==='checkbox')el.checked=!!cfg[key];else el.value=cfg[key]??defaults[key]}}
+function readForm(){const oldZone=cfg.timezone,oldZoneLabel=Array.from($('timezone').options).find(o=>o.value===oldZone)?.text;const oldCity=cfg.weatherCity;for(const [id,key] of Object.entries(fields)){const el=$(id);cfg[key]=el.type==='checkbox'?el.checked:el.value}if(cfg.timezone!==oldZone&&(!cfg.secondLabel||cfg.secondLabel===oldZoneLabel||cfg.secondLabel==='New York'))cfg.secondLabel=$('timezone').selectedOptions[0].text;if(cfg.weatherCity!==oldCity)cfg.weatherCoords=null;localStorage.setItem('photoFrameSettings',JSON.stringify(cfg));applySettings();clearInterval(weatherTimer);fetchWeather();weatherTimer=setInterval(fetchWeather,Number(cfg.weatherRefresh)*60000)}
+$('settings-open').onclick=()=>{$('settings-backdrop').classList.add('open');$('settings-backdrop').setAttribute('aria-hidden','false');loadForm();showControls()};$('settings-close').onclick=()=>{$('settings-backdrop').classList.remove('open');$('settings-backdrop').setAttribute('aria-hidden','true')};$('settings-backdrop').addEventListener('click',e=>{if(e.target===$('settings-backdrop'))$('settings-close').click()});$('save-settings').onclick=()=>{readForm();$('settings-close').click();showControls()};$('reset-settings').onclick=()=>{cfg={...defaults};loadForm();readForm();showControls()};$('hide-widgets').onclick=()=>{$('dashboard').classList.toggle('hidden');$('hide-widgets').textContent=$('dashboard').classList.contains('hidden')?'Show panel':'Hide panel';showControls()};$('use-location').onclick=()=>{if(!navigator.geolocation){$('weather-status').textContent='Geolocation is not supported by this browser.';return} $('weather-status').textContent='Requesting location permission…';navigator.geolocation.getCurrentPosition(p=>fetchWeather({latitude:p.coords.latitude,longitude:p.coords.longitude}),e=>{$('weather-status').textContent='Location not available. Enter a city manually instead.'},{enableHighAccuracy:false,timeout:10000})};$('refresh-weather').onclick=()=>fetchWeather();
+$('prev').onclick=()=>{showPhoto(position-1);showControls()};$('next').onclick=()=>{showPhoto(position+1);showControls()};$('toggle').onclick=()=>{setPlaying(!playing);showControls()};$('shuffle').onclick=()=>{shuffled=!shuffled;$('shuffle').textContent=`Shuffle: ${shuffled?'On':'Off'}`;if(shuffled)shuffleOrder();else{order=PHOTOS.map((_,i)=>i);position=0}showPhoto(position);startTimer();showControls()};$('interval').onchange=startTimer;$('full').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){caption.textContent='Use your browser menu for fullscreen.'}showControls()};document.addEventListener('mousemove',showControls);document.addEventListener('pointerdown',e=>{if(!$('settings-backdrop').classList.contains('open'))showControls()});document.addEventListener('keydown',e=>{if($('settings-backdrop').classList.contains('open')){if(e.key==='Escape')$('settings-close').click();return}if(e.key==='ArrowRight')showPhoto(position+1);else if(e.key==='ArrowLeft')showPhoto(position-1);else if(e.code==='Space'){e.preventDefault();setPlaying(!playing)}else if(e.key.toLowerCase()==='f')$('full').click();else if(e.key.toLowerCase()==='s')$('settings-open').click();showControls()});document.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].screenX},{passive:true});document.addEventListener('touchend',e=>{if(touchStartX===null)return;const d=e.changedTouches[0].screenX-touchStartX;if(Math.abs(d)>55)showPhoto(position+(d<0?1:-1));touchStartX=null},{passive:true});
+loadForm();applySettings();showPhoto(0);startTimer();fetchWeather();weatherTimer=setInterval(fetchWeather,Number(cfg.weatherRefresh)*60000);setInterval(updateClock,1000);showControls();
+</script></body></html>
